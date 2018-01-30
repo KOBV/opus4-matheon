@@ -96,7 +96,7 @@
       <div id="services" class="services-menu">
          <xsl:if test="normalize-space(File/@PathName) and File[@VisibleInFrontdoor='1']">
              <xsl:choose>
-                <xsl:when test="php:functionString('Frontdoor_IndexController::checkIfFileEmbargoHasPassed', @Id)">
+                <xsl:when test="php:functionString('Application_Xslt::embargoHasPassed', @Id)">
                     <div id="download-fulltext" class="services">
                        <h3>
                           <xsl:call-template name="translateString">
@@ -105,9 +105,9 @@
                        </h3>
                        <ul>
                            <xsl:choose>
-                               <xsl:when test="php:functionString('Frontdoor_IndexController::useCustomSortOrder', @Id)">
+                               <xsl:when test="php:functionString('Application_Xslt::customFileSortingEnabled', @Id)">
                                   <xsl:apply-templates select="File[@VisibleInFrontdoor='1']">
-                                     <xsl:sort select="@SortOrder"/>
+                                     <xsl:sort select="@SortOrder" data-type="number" />
                                   </xsl:apply-templates>
                                </xsl:when>
                                <xsl:otherwise>
@@ -132,9 +132,7 @@
                   <xsl:with-param name="string">frontdoor_export_options</xsl:with-param>
                </xsl:call-template>
             </h3>
-            <ul>
-               <xsl:call-template name="ExportFunctions" />
-            </ul>
+            <xsl:call-template name="ExportFunctions" />
          </div>
 
          <xsl:if test="$printOnDemandEnabled and Licence[@PodAllowed='1']">
@@ -187,7 +185,7 @@
             <xsl:apply-templates select="TitleAdditional" mode="mainLanguage" />
             <xsl:apply-templates select="TitleAdditional" mode="otherLanguage" />
             <xsl:apply-templates select="Series[@Visible=1]" >
-                <xsl:sort select="@SortOrder"/>
+                <xsl:sort select="@SortOrder" data-type="number" />
             </xsl:apply-templates>
             <xsl:apply-templates select="@PublisherName" />
             <xsl:apply-templates select="@PublisherPlace" />
@@ -308,6 +306,10 @@
 
             <xsl:apply-templates select="Patent" />
             <xsl:apply-templates select="Licence" />
+
+            <xsl:if test="php:functionString('Application_Xslt::isDisplayField', 'BelongsToBibliography')">
+                <xsl:apply-templates select="@BelongsToBibliography" />
+            </xsl:if>
         </table>
 
     </xsl:template>

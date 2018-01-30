@@ -72,9 +72,7 @@ class Admin_AccountController extends Application_Controller_Action {
             $this->_helper->redirector('index');
         }
 
-        $moduleDirectory = dirname($this->getFrontController()->getModuleDirectory());
-        $modulesModel = new Application_Util_Modules($moduleDirectory);
-        $this->view->allModules = $modulesModel->getAll();
+        $this->view->allModules = array_keys(Application_Modules::getInstance()->getModules());
 
         $account = new Opus_Account($id);
         $this->view->account = $account;
@@ -151,20 +149,11 @@ class Admin_AccountController extends Application_Controller_Action {
             $postData = $this->getRequest()->getPost();
 
             if ($accountForm->isValid($postData)) {
-                $login = $postData['username'];
-                $password = $postData['password'];
-                $firstname = $postData['firstname'];
-                $lastname = $postData['lastname'];
-                $email = $postData['email'];
-                $roles = Admin_Form_Account::parseSelectedRoles($postData);
-
                 $account = new Opus_Account();
 
-                $account->setLogin($login);
-                $account->setPassword($password);
-                $account->setFirstName($firstname);
-                $account->setLastName($lastname);
-                $account->setEmail($email);
+                $accountForm->updateModel($account);
+
+                $roles = Admin_Form_Account::parseSelectedRoles($postData);
                 $account->setRole($roles);
 
                 $account->store();
@@ -342,7 +331,7 @@ class Admin_AccountController extends Application_Controller_Action {
             $messages['failure'] = $this->view->translate($message);
         }
 
-        $this->_redirectTo('index', $messages);
+        $this->_helper->Redirector->redirectTo('index', $messages);
     }
 
 }

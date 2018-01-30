@@ -19,8 +19,6 @@
 # Adds testdata to database and rebuilds the index.
 #
 # TODO verify waiting for Solr works for local and remote setup
-# TODO requires DB_ADMIN_PASSWORD DB_ADMIN DB_NAME (get from config.ini?)
-#
 #
 
 set -e
@@ -30,6 +28,18 @@ SCRIPT_NAME_FULL="`readlink -f "$0"`"
 SCRIPT_PATH="`dirname "$SCRIPT_NAME_FULL"`"
 
 BASEDIR="`dirname "$SCRIPT_PATH"`"
+
+#
+# Prepare test workspace directories
+#
+
+mkdir -p "$BASEDIR/tests/workspace/files"
+mkdir -p "$BASEDIR/tests/workspace/incoming"
+mkdir -p "$BASEDIR/tests/workspace/log"
+mkdir -p "$BASEDIR/tests/workspace/cache"
+mkdir -p "$BASEDIR/tests/workspace/export"
+mkdir -p "$BASEDIR/tests/workspace/tmp"
+mkdir -p "$BASEDIR/tests/workspace/tmp/resumption"
 
 #
 # Import test data into database

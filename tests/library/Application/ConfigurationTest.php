@@ -150,11 +150,82 @@ class Application_ConfigurationTest extends ControllerTestCase {
         $this->assertEquals(APPLICATION_PATH . '/tests/workspace/tmp/', $this->config->getTempPath());
     }
 
+    public function testSetTempPath()
+    {
+        $newTempPath = $this->config->getTempPath() . 'subdir';
+
+        $this->config->setTempPath($newTempPath);
+
+        $this->assertEquals($newTempPath, $this->config->getTempPath());
+
+        $this->config->setTempPath(null);
+
+        $this->assertEquals(APPLICATION_PATH . '/tests/workspace/tmp/', $this->config->getTempPath());
+    }
+
     public function testGetInstance() {
         $config = Application_Configuration::getInstance();
         $this->assertNotNull($config);
         $this->assertInstanceOf('Application_Configuration', $config);
         $this->assertSame($config, Application_Configuration::getInstance());
+    }
+
+    public function testGetName() {
+        $config = Application_Configuration::getInstance();
+        $this->assertEquals('OPUS 4', $config->getName());
+
+        Zend_Registry::get('Zend_Config')->merge(new Zend_Config(array('name' => 'OPUS Test')));
+        $this->assertEquals('OPUS Test', $config->getName());
+
+        $zendConfig = Zend_Registry::get('Zend_Config');
+        unset($zendConfig->name);
+        $this->assertEquals('OPUS 4', $config->getName());
+    }
+
+    public function testClearInstance()
+    {
+        $config = Application_Configuration::getInstance();
+        $this->assertInstanceOf('Application_Configuration', $config);
+
+        Application_Configuration::clearInstance();
+
+        $config2 = Application_Configuration::getInstance();
+        $this->assertInstanceOf('Application_Configuration', $config2);
+
+        $this->assertNotSame($config, $config2);
+    }
+
+    public function testGetValue()
+    {
+        $config = Application_Configuration::getInstance();
+
+        $this->assertEquals('https://orcid.org/', $config->getValue('orcid.baseUrl'));
+    }
+
+    public function testGetValueForUnknownKey()
+    {
+        $config = Application_Configuration::getInstance();
+
+        $this->assertNull($config->getValue('unknownKey'));
+        $this->assertNull($config->getValue('unknownScope.unknownKey'));
+        $this->assertNull($config->getValue('unknownScope.unknownKey.thirdLevel'));
+    }
+
+    public function testGetValueForArray()
+    {
+        $config = Application_Configuration::getInstance();
+
+        $subconfig = $config->getValue('orcid');
+
+        $this->assertInstanceOf('Zend_Config', $subconfig);
+    }
+
+    public function testGetValueForNull()
+    {
+        $config = Application_Configuration::getInstance();
+
+        $this->assertNull($config->getValue(null));
+        $this->assertNull($config->getValue(''));
     }
 
 }

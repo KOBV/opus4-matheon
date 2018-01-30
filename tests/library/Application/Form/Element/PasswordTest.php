@@ -46,6 +46,11 @@ class Application_Form_Element_PasswordTest extends FormElementTestCase {
         $element = $this->getElement();
 
         $this->assertTrue($element->isValid('123456'));
+        $this->assertTrue($element->isValid('12@456'));
+        $this->assertTrue($element->isValid('123456.'));
+        $this->assertTrue($element->isValid('abcdef'));
+        $this->assertTrue($element->isValid('abc56def'));
+        $this->assertTrue($element->isValid('123456%'));
     }
 
     public function testValidationFailure() {

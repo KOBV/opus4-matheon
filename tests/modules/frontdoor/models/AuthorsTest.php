@@ -46,9 +46,11 @@ class Frontdoor_Model_AuthorsTest extends ControllerTestCase {
         $document = $this->createTestDocument();
         $document->setServerState('published');
         $document->setType('testtype');
+        $document->setLanguage('deu');
 
         $title = new Opus_Title();
         $title->setValue('testtitle');
+        $title->setLanguage('deu');
         $document->setTitleMain($title);
 
         $author1 = new Opus_Person();
@@ -104,21 +106,6 @@ class Frontdoor_Model_AuthorsTest extends ControllerTestCase {
         $document->setServerState('unpublished');
         $this->unpublishedDocumentId = $document->store();
         $this->assertNotNull($this->unpublishedDocumentId);
-    }
-
-    public function tearDown() {
-        $person = new Opus_Person($this->author1Id);
-        $person->delete();
-
-        $person = new Opus_Person($this->author2Id);
-        $person->delete();
-
-        $person = new Opus_Person($this->author3Id);
-        $person->delete();
-
-        $person = new Opus_Person($this->author4Id);
-        $person->delete();
-        parent::tearDown();
     }
 
     public function testConstructor() {

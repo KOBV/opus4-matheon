@@ -33,6 +33,31 @@
 
 class Admin_Form_AccountTest extends ControllerTestCase {
 
+    private $_account;
+
+
+    public function setUp()
+    {
+        parent::setUp();
+
+        $user = new Opus_Account();
+        $user->setLogin('user');
+        $user->setPassword('userpwd');
+        $user->store();
+
+        $this->_account = $user;
+    }
+
+    public function tearDown()
+    {
+        if (!is_null($this->_account))
+        {
+            $this->_account->delete();
+        }
+
+        parent::tearDown();
+    }
+
     public function testCreateForm() {
         $form = new Admin_Form_Account();
         $this->assertNotNull($form);
@@ -140,10 +165,7 @@ class Admin_Form_AccountTest extends ControllerTestCase {
 
         $this->assertFalse($form->isValid($postData));
 
-        $errors = $form->getErrors();
-
-        $this->assertTrue(isset($errors['confirmPassword']));
-        $this->assertTrue(in_array('notMatch', $errors['confirmPassword']));
+        $this->assertContains('notMatch', $form->getErrors('confirmPassword'));
     }
 
     public function testValidationBadEmail() {
@@ -159,10 +181,7 @@ class Admin_Form_AccountTest extends ControllerTestCase {
 
         $this->assertFalse($form->isValid($postData));
 
-        $errors = $form->getErrors();
-
-        $this->assertTrue(isset($errors['email']));
-        $this->assertTrue(in_array('emailAddressInvalidFormat', $errors['email']));
+        $this->assertContains('emailAddressInvalidFormat', $form->getErrors('email'));
     }
 
 }

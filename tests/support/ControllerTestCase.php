@@ -28,9 +28,8 @@
  * @author      Jens Schwidder <schwidder@zib.de>
  * @author      Thoralf Klein <thoralf.klein@zib.de>
  * @author      Michael Lang <lang@zib.de>
- * @copyright   Copyright (c) 2008-2014, OPUS 4 development team
+ * @copyright   Copyright (c) 2008-2017, OPUS 4 development team
  * @license     http://www.gnu.org/licenses/gpl.html General Public License
- * @version     $Id$
  */
 
 /**
@@ -103,8 +102,40 @@ class ControllerTestCase extends Zend_Test_PHPUnit_ControllerTestCase {
         $this->resetSearch();
         $this->deleteTestDocuments();
         $this->deleteTestFiles();
+
+        // check if documents have been modified by a side effect (should not happen)
+        $this->checkDoc146();
+        $this->checkDoc1();
+
+        /* ONLY FOR DEBUGGING
+        $checker = new AssumptionChecker($this);
+        $checker->checkYearFacetAssumption();
+        */
+
         $this->logger = null;
+        Application_Configuration::clearInstance(); // reset Application_Configuration
         parent::tearDown();
+    }
+
+    /**
+     * Used for debugging. Document 146 should never be modified in a test.
+     *
+     * In the past side effects because of bugs modified documents unintentionally.
+     */
+    protected function checkDoc146()
+    {
+        $doc = new Opus_Document(146);
+        $modified = $doc->getServerDateModified();
+
+        $this->assertEquals(2012, $modified->getYear());
+    }
+
+    protected function checkDoc1()
+    {
+        $doc = new Opus_Document(1);
+        $modified = $doc->getServerDateModified();
+
+        $this->assertEquals(2010, $modified->getYear());
     }
 
     /**
@@ -188,12 +219,13 @@ class ControllerTestCase extends Zend_Test_PHPUnit_ControllerTestCase {
 
     /**
      * Check if Solr-Config is given, otherwise skip the tests.
+     *
+     * TODO check behavior of getServiceConfiguration
      */
     protected function requireSolrConfig() {
-        $config = Zend_Registry::get('Zend_Config');
-        if (!isset($config->searchengine->index->host) ||
-            !isset($config->searchengine->index->port) ||
-            !isset($config->searchengine->index->app)) {
+        $config = Opus_Search_Config::getServiceConfiguration(Opus_Search_Service::SERVICE_TYPE_INDEX);
+
+        if (is_null($config)) {
             $this->markTestSkipped('No solr-config given.  Skipping test.');
         }
     }
@@ -206,7 +238,21 @@ class ControllerTestCase extends Zend_Test_PHPUnit_ControllerTestCase {
         $config = Zend_Registry::get('Zend_Config');
         // TODO old config path still needed?
         // $config->searchengine->index->app = 'solr/corethatdoesnotexist';
-        $config->searchengine->solr->default->service->endpoint->localhost->path = '/solr/corethatdoesnotexist';
+        $config->merge(new Zend_Config(array(
+            'searchengine' => array(
+                'solr' => array(
+                    'default' => array(
+                        'service' => array(
+                            'endpoint' => array(
+                                'localhost' => array(
+                                    'path' => '/solr/corethatdoesnotexist'
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )));
     }
 
     /**
@@ -501,32 +547,52 @@ class ControllerTestCase extends Zend_Test_PHPUnit_ControllerTestCase {
         Zend_Debug::dump($this->getResponse()->getBody());
     }
 
+    /**
+     * Removes a test document from the database.
+     * @param $value Opus_Document|int
+     */
     public function removeDocument($value) {
         if (!is_null($value)) {
+            $docId = null;
             try {
                 // check if value is Opus_Document or ID
-                $doc = ($value instanceof Opus_Document) ? new Opus_Document($value->getId()) : new Opus_Document($value);
-
-                // if (!$doc->isNewRecord()) {
-                    // only delete if document has been stored
-                    $doc->deletePermanent();
-                // }
+                $doc = ($value instanceof Opus_Document) ? $value : new Opus_Document($value);
+                $docId = $doc->getId();
+                $doc->deletePermanent();
             }
             catch (Opus_Model_NotFoundException $omnfe) {
                 // Model nicht gefunden -> alles gut (hoffentlich)
             }
+
+            // make sure test documents have been deleted
+            try
+            {
+                $doc = new Opus_Document($docId);
+                $this->getLogger()->debug("Test document {$docId} was not deleted.");
+            }
+            catch (Opus_Model_NotFoundException $omnfe) {
+                // ignore - document was deleted
+                $this->getLogger()->debug("Test document {$docId} was deleted.");
+            }
+
         }
     }
 
-    private function deleteTestDocuments() {
-        if (!is_null($this->testDocuments)) {
-            foreach ($this->testDocuments as $key => $doc) {
-                try {
+    private function deleteTestDocuments()
+    {
+        if (!is_null($this->testDocuments))
+        {
+            foreach ($this->testDocuments as $key => $doc)
+            {
+                try
+                {
                     $this->removeDocument($doc);
-                    unset ($this->testDocuments[$key]);
-                } catch (Exception $e) {
+                }
+                catch (Exception $e) {
                 }
             }
+
+            $this->testDocuments = null;
         }
     }
 
@@ -596,6 +662,29 @@ class ControllerTestCase extends Zend_Test_PHPUnit_ControllerTestCase {
     public function resetSearch() {
         Opus_Search_Config::dropCached();
         Opus_Search_Service::dropCached();
+    }
+
+    /**
+     * Sets the hostname for a test.
+     * @param $host string Hostname for tests
+     * @throws Zend_Exception
+     */
+    public function setHostname($host) {
+        $view = Zend_Registry::get('Opus_View');
+        $view->getHelper('ServerUrl')->setHost($host);
+    }
+
+    /**
+     * Sets base URL for tests.
+     *
+     * A lot of tests fail if the base URL is set because they verify URLs from the server root, like '/auth' instead
+     * of 'opus4/auth' (base URL = 'opus4').
+     *
+     * @param $baseUrl string Base URL for tests
+     * @throws Zend_Controller_Exception
+     */
+    public function setBaseUrl($baseUrl) {
+        Zend_Controller_Front::getInstance()->setBaseUrl($baseUrl);
     }
 
 }

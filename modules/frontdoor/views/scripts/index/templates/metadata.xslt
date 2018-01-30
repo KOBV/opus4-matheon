@@ -105,6 +105,28 @@
         </tr>
     </xsl:template>
 
+    <xsl:template match="@BelongsToBibliography">
+        <tr>
+            <th class="name">
+                <xsl:call-template name="translateFieldname" />
+            </th>
+            <td class="value BelongsToBibliography">
+                <xsl:choose>
+                    <xsl:when test=". = '1'">
+                        <xsl:call-template name="translateString">
+                           <xsl:with-param name="string">answer_yes</xsl:with-param>
+                        </xsl:call-template>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:call-template name="translateString">
+                           <xsl:with-param name="string">answer_no</xsl:with-param>
+                        </xsl:call-template>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </td>
+        </tr>
+    </xsl:template>
+
     <!-- -->
     <!-- Templates for "external fields". -->
     <!-- -->
@@ -134,13 +156,25 @@
                         <xsl:text>/solrsearch/index/search/searchtype/collection/id/</xsl:text>
                         <xsl:value-of select="@Id" />
                     </xsl:attribute>
-
-                    <xsl:attribute name="title">
-                        <xsl:call-template name="translateString">
-                            <xsl:with-param name="string">frontdoor_collection_link</xsl:with-param>
-                        </xsl:call-template>
-                    </xsl:attribute>
-                    <xsl:value-of select="@DisplayFrontdoor" />
+                    <xsl:choose>
+                        <xsl:when test="@DisplayFrontdoor != ''">
+                            <xsl:attribute name="title">
+                                <xsl:call-template name="translateString">
+                                    <xsl:with-param name="string">frontdoor_collection_link</xsl:with-param>
+                                </xsl:call-template>
+                            </xsl:attribute>
+                            <xsl:value-of select="@DisplayFrontdoor" />
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:call-template name="translateStringWithDefault">
+                                <xsl:with-param name="string">default_collection_role_<xsl:value-of select="@RoleName" />
+                                </xsl:with-param>
+                                <xsl:with-param name="default">
+                                    <xsl:value-of select="@RoleName" />
+                                </xsl:with-param>
+                            </xsl:call-template>
+                        </xsl:otherwise>
+                    </xsl:choose>
                 </a>
             </td>
         </tr>
@@ -241,7 +275,45 @@
             </xsl:attribute>
             <xsl:value-of select="concat(@FirstName, ' ', @LastName)" />
         </xsl:element>
+
+        <xsl:if test="@IdentifierOrcid and php:functionString('Application_Xslt::optionEnabled', 'linkAuthor.frontdoor', 'orcid')">
+            <xsl:element name="a">
+                <xsl:attribute name="href">
+                    <xsl:value-of select="php:functionString('Application_Xslt::optionValue', 'baseUrl', 'orcid')"/>
+                    <xsl:value-of select="@IdentifierOrcid"/>
+                </xsl:attribute>
+                <xsl:attribute name="class">
+                    <xsl:text>orcid-link</xsl:text>
+                </xsl:attribute>
+                <xsl:attribute name="title">
+                    <xsl:call-template name="translateString">
+                        <xsl:with-param name="string">frontdoor_orcid</xsl:with-param>
+                    </xsl:call-template>
+                </xsl:attribute>
+                <xsl:text>ORCiD</xsl:text>
+            </xsl:element>
+        </xsl:if>
+
+        <xsl:if test="@IdentifierGnd and php:functionString('Application_Xslt::optionEnabled', 'linkAuthor.frontdoor', 'gnd')">
+            <xsl:element name="a">
+                <xsl:attribute name="href">
+                    <xsl:value-of select="php:functionString('Application_Xslt::optionValue', 'baseUrl', 'gnd')"/>
+                    <xsl:value-of select="@IdentifierGnd"/>
+                </xsl:attribute>
+                <xsl:attribute name="class">
+                    <xsl:text>gnd-link</xsl:text>
+                </xsl:attribute>
+                <xsl:attribute name="title">
+                    <xsl:call-template name="translateString">
+                        <xsl:with-param name="string">frontdoor_gnd</xsl:with-param>
+                    </xsl:call-template>
+                </xsl:attribute>
+                <xsl:text>GND</xsl:text>
+            </xsl:element>
+        </xsl:if>
+
         <xsl:if test="position() != last()">, </xsl:if>
+
         <xsl:if test="position() = last()">
             <xsl:text disable-output-escaping="yes">&lt;/td&gt;</xsl:text>
             <xsl:text disable-output-escaping="yes">&lt;/tr&gt;</xsl:text>
@@ -339,10 +411,10 @@
             <td>
                 <xsl:element name="a">
                     <xsl:attribute name="href">
-                        <xsl:text>http://dx.doi.org/</xsl:text>
+                        <xsl:value-of select="php:functionString('Application_Xslt::optionValue', 'doi.resolverUrl')"/>
                         <xsl:value-of select="@Value" />
                     </xsl:attribute>
-                    <xsl:text>http://dx.doi.org/</xsl:text>
+                    <xsl:value-of select="php:functionString('Application_Xslt::optionValue', 'doi.resolverUrl')"/>
                     <xsl:value-of select="@Value" />
                 </xsl:element>
             </td>

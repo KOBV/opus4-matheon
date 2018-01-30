@@ -47,6 +47,7 @@ class Frontdoor_MailControllerTest extends ControllerTestCase {
 
         $title = new Opus_Title();
         $title->setValue('foobartitle');
+        $title->setLanguage('deu');
         $document->setTitleMain($title);       
 
         $this->documentId = $document->store();
@@ -58,6 +59,7 @@ class Frontdoor_MailControllerTest extends ControllerTestCase {
 
         $title = new Opus_Title();
         $title->setValue('foobartitle');
+        $title->setLanguage('deu');
         $document->setTitleMain($title);
 
         $author = new Opus_Person();
@@ -72,13 +74,6 @@ class Frontdoor_MailControllerTest extends ControllerTestCase {
 
         $this->authorDocumentId = $document->store();
         $this->assertNotNull($this->authorDocumentId);
-    }
-
-    protected function tearDown() {
-        $person = new Opus_Person($this->authorId);
-        $person->delete();
-        
-        parent::tearDown();
     }
 
     public function testIndexActionNotSupported() {

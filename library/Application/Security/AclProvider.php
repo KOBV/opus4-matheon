@@ -52,6 +52,8 @@ class Application_Security_AclProvider {
 
     /**
      * Ressourcen, die in Datei application/configs/navigationModules.xml referenziert werden.
+     *
+     * TODO resources should be declared in modules and controllers (decentralising)
      */
     public static $resourceNames = array(
         'admin' => array(
@@ -68,7 +70,8 @@ class Application_Security_AclProvider {
             'systeminfo',
             'indexmaintenance',
             'job',
-            'options'),
+            'options',
+            'persons'),
         'review' => array(
             'reviewing'),
         'setup' => array(
@@ -111,7 +114,14 @@ class Application_Security_AclProvider {
         $user = Zend_Auth::getInstance()->getIdentity();
 
         if (!is_null($user)) {
-            $realm->setUser($user);
+            try {
+                $realm->setUser($user);
+            }
+            catch (Opus_Security_Exception $ose) {
+                // unknown user -> invalidate session (logout)
+                Zend_Auth::getInstance()->clearIdentity();
+                $user = null;
+            }
         }
 
         $parents = $realm->getRoles();

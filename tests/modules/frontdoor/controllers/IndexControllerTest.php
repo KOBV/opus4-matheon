@@ -29,9 +29,9 @@
  * @package     Tests
  * @author      Julian Heise <heise@zib.de>
  * @author      Michael Lang <lang@zib.de>
- * @copyright   Copyright (c) 2008-2014, OPUS 4 development team
+ * @author      Jens Schwidder <schwidder@zib.de>
+ * @copyright   Copyright (c) 2008-2017, OPUS 4 development team
  * @license     http://www.gnu.org/licenses/gpl.html General Public License
- * @version     $Id$
  */
 class Frontdoor_IndexControllerTest extends ControllerTestCase {
 
@@ -58,6 +58,17 @@ class Frontdoor_IndexControllerTest extends ControllerTestCase {
 
       $this->_document = $this->createTestDocument();
       $this->_document->setType("doctoral_thesis");
+
+      $title = new Opus_Title();
+      $title->setLanguage('deu');
+      $title->setValue('Titel');
+      $this->_document->addTitleMain($title);
+
+      $title = new Opus_Title();
+      $title->setLanguage('eng');
+      $title->setValue('Title');
+      $this->_document->addTitleMain($title);
+
       $this->_document->store();
 
       //setting server globals
@@ -191,44 +202,37 @@ class Frontdoor_IndexControllerTest extends ControllerTestCase {
    /*
     * Regression test for OPUSVIER-2165
     */
+   public function testFrontdoorTitleRespectsDocumentLanguageDeu()
+   {
+       $docId = $this->_document->getId();
 
-   public function testFrontdoorTitleRespectsDocumentLanguageDeu() {
-      $d = new Opus_Document(146);
-      $lang = $d->getLanguage();
-      $d->setLanguage('deu');
-      $d->store();
+       $doc = new Opus_Document($docId);
+       $doc->setLanguage('deu');
+       $doc->setServerState('published');
+       $doc->store();
 
-      $this->dispatch('/frontdoor/index/index/docId/146');
+       $this->dispatch("/frontdoor/index/index/docId/$docId");
 
-      // restore language
-      $d = new Opus_Document(146);
-      $d->setLanguage($lang);
-      $d->store();
-
-
-      $this->assertNotContains('<title>OPUS 4 | COLN</title>', $this->getResponse()->getBody());
-      $this->assertContains('<title>OPUS 4 | KOBV</title>', $this->getResponse()->getBody());
+       $this->assertContains('<title>OPUS 4 | Titel</title>', $this->getResponse()->getBody());
+       $this->assertNotContains('<title>OPUS 4 | Title</title>', $this->getResponse()->getBody());
    }
 
    /**
     * Regression test for OPUSVIER-2165
     */
-   public function testFrontdoorTitleRespectsDocumentLanguageEng() {
-      $d = new Opus_Document(146);
-      $lang = $d->getLanguage();
-      $d->setLanguage('eng');
-      $d->store();
+   public function testFrontdoorTitleRespectsDocumentLanguageEng()
+   {
+       $docId = $this->_document->getId();
 
-      $this->dispatch('/frontdoor/index/index/docId/146');
+       $doc = new Opus_Document($docId);
+       $doc->setLanguage('eng');
+       $doc->setServerState('published');
+       $doc->store();
 
-      // restore language
-      $d = new Opus_Document(146);
-      $d->setLanguage($lang);
-      $d->store();
+       $this->dispatch("/frontdoor/index/index/docId/$docId");
 
-      $this->assertContains('<title>OPUS 4 | COLN</title>', $this->getResponse()->getBody());
-      $this->assertNotContains('<title>OPUS 4 | KOBV</title>', $this->getResponse()->getBody());
-
+       $this->assertContains('<title>OPUS 4 | Title</title>', $this->getResponse()->getBody());
+       $this->assertNotContains('<title>OPUS 4 | Titel</title>', $this->getResponse()->getBody());
    }
 
    /**
@@ -238,21 +242,19 @@ class Frontdoor_IndexControllerTest extends ControllerTestCase {
     * the first title is used as page title
     *
     */
-   public function testFrontdoorTitleRespectsDocumentLanguageWithoutCorrespondingTitle() {
-      $d = new Opus_Document(146);
-      $lang = $d->getLanguage();
-      $d->setLanguage('fra');
-      $d->store();
+   public function testFrontdoorTitleRespectsDocumentLanguageWithoutCorrespondingTitle()
+   {
+       $docId = $this->_document->getId();
 
-      $this->dispatch('/frontdoor/index/index/docId/146');
+       $doc = new Opus_Document($docId);
+       $doc->setLanguage('fra');
+       $doc->setServerState('published');
+       $doc->store();
 
-      // restore language
-      $d = new Opus_Document(146);
-      $d->setLanguage($lang);
-      $d->store();
+       $this->dispatch("/frontdoor/index/index/docId/$docId");
 
-      $this->assertNotContains('<title>OPUS 4 | COLN</title>', $this->getResponse()->getBody());
-      $this->assertContains('<title>OPUS 4 | KOBV</title>', $this->getResponse()->getBody());
+       $this->assertNotContains('<title>OPUS 4 | Title</title>', $this->getResponse()->getBody());
+       $this->assertContains('<title>OPUS 4 | Titel</title>', $this->getResponse()->getBody());
    }
 
    /**
@@ -261,26 +263,21 @@ class Frontdoor_IndexControllerTest extends ControllerTestCase {
     * if database contains more than one title in the document's language,
     * the first title is used as page title
     */
-   public function testFrontdoorTitleRespectsDocumentLanguageMultipleCandidates() {
-      $d = new Opus_Document(146);
-      $lang = $d->getLanguage();
-      $d->setLanguage('deu');
-      $titles = $d->getTitleMain();
-      $d->addTitleMain()->setValue('VBOK')->setLanguage('deu');
-      $d->store();
+   public function testFrontdoorTitleRespectsDocumentLanguageMultipleCandidates()
+   {
+       $docId = $this->_document->getId();
 
-      $this->dispatch('/frontdoor/index/index/docId/146');
+       $doc = new Opus_Document($docId);
+       $doc->setLanguage('deu');
+       $doc->setServerState('published');
+       $doc->addTitleMain()->setValue('Titel2')->setLanguage('deu');
+       $doc->store();
 
-      // restore language
-      // restore titles
-      $d = new Opus_Document(146);
-      $d->setLanguage($lang);
-      $d->setTitleMain($titles);
-      $d->store();
+       $this->dispatch("/frontdoor/index/index/docId/$docId");
 
-      $this->assertNotContains('<title>OPUS 4 | COLN</title>', $this->getResponse()->getBody());
-      $this->assertNotContains('<title>OPUS 4 | VBOK</title>', $this->getResponse()->getBody());
-      $this->assertContains('<title>OPUS 4 | KOBV</title>', $this->getResponse()->getBody());
+       $this->assertNotContains('<title>OPUS 4 | Title</title>', $this->getResponse()->getBody());
+       $this->assertNotContains('<title>OPUS 4 | Titel2</title>', $this->getResponse()->getBody());
+       $this->assertContains('<title>OPUS 4 | Titel</title>', $this->getResponse()->getBody());
    }
 
    /**
@@ -325,9 +322,9 @@ class Frontdoor_IndexControllerTest extends ControllerTestCase {
       $this->dispatch('/frontdoor/index/index/docId/1');
 
       $responseBody = $this->getResponse()->getBody();
-      $this->assertRegExp('/<a href="[^"]+\/1\/asis-hap.pdf"/', $responseBody);
-      $this->assertRegExp('/<a href="[^"]+\/1\/asis-hap_%27.pdf"/', $responseBody);
-      $this->assertNotRegExp('/<a href="[^"]+\/1\/asis-hap_\'.pdf"/', $responseBody);
+      $this->assertRegExp('/<a class="application_pdf" href="[^"]+\/1\/asis-hap.pdf"/', $responseBody);
+      $this->assertRegExp('/<a class="application_pdf" href="[^"]+\/1\/asis-hap_%27.pdf"/', $responseBody);
+      $this->assertNotRegExp('/<a class="application_pdf" href="[^"]+\/1\/asis-hap_\'.pdf"/', $responseBody);
    }
 
    /**
@@ -348,8 +345,8 @@ class Frontdoor_IndexControllerTest extends ControllerTestCase {
       $this->dispatch('/frontdoor/index/index/docId/147');
 
       $responseBody = $this->getResponse()->getBody();
-      $this->assertRegExp('/<a href="[^"]+\/\d+\/special-chars-%25-%22-%23-%26.pdf">/', $responseBody);
-      $this->assertRegExp('/<a href="[^"]+\/\d+\/%27many%27\+\+-\+\+spaces\+\+and\+\+quotes.pdf">/', $responseBody);
+      $this->assertRegExp('/<a class="application_pdf" href="[^"]+\/\d+\/special-chars-%25-%22-%23-%26.pdf">/', $responseBody);
+      $this->assertRegExp('/<a class="application_pdf" href="[^"]+\/\d+\/%27many%27\+\+-\+\+spaces\+\+and\+\+quotes.pdf">/', $responseBody);
    }
 
    /**
@@ -841,9 +838,9 @@ class Frontdoor_IndexControllerTest extends ControllerTestCase {
         Zend_Registry::set('Zend_Config', $configBackup);
 
         $body = $this->getResponse()->getBody();
-        $positionFile1 = strpos($body, 'oai_invisible.txt (1 KB)');
-        $positionFile2 = strpos($body, 'test.txt (1 KB)');
-        $positionFile3 = strpos($body, 'test.pdf (7 KB)');
+        $positionFile1 = strpos($body, 'oai_invisible.txt');
+        $positionFile2 = strpos($body, 'test.txt');
+        $positionFile3 = strpos($body, 'test.pdf');
         $this->assertTrue($positionFile1 < $positionFile2);
         $this->assertTrue($positionFile1 < $positionFile3);
         $this->assertTrue($positionFile2 < $positionFile3);
@@ -861,9 +858,9 @@ class Frontdoor_IndexControllerTest extends ControllerTestCase {
         Zend_Registry::set('Zend_Config', $configBackup);
 
         $body = $this->getResponse()->getBody();
-        $positionFile1 = strpos($body, 'oai_invisible.txt (1 KB)');
-        $positionFile2 = strpos($body, 'test.pdf (7 KB)');
-        $positionFile3 = strpos($body, 'test.txt (1 KB)');
+        $positionFile1 = strpos($body, 'oai_invisible.txt');
+        $positionFile2 = strpos($body, 'test.pdf');
+        $positionFile3 = strpos($body, 'test.txt');
         $this->assertTrue($positionFile1 < $positionFile2);
         $this->assertTrue($positionFile1 < $positionFile3);
         $this->assertTrue($positionFile2 < $positionFile3);
@@ -944,6 +941,32 @@ class Frontdoor_IndexControllerTest extends ControllerTestCase {
         }
     }
 
+    public function testSortingOfFiles() {
+        $doc = $this->createTestDocument();
+        $doc->setServerState('published');
+
+        $file = $this->createTestFile('file1.txt');
+        $file->setSortOrder(1);
+        $doc->addFile($file);
+
+        $file = $this->createTestFile('file2.txt');
+        $file->setSortOrder(2);
+        $doc->addFile($file);
+
+        $file = $this->createTestFile('file10.txt');
+        $file->setSortOrder(10);
+        $doc->addFile($file);
+
+        $docId = $doc->store();
+
+        $this->dispatch("/frontdoor/index/index/docId/$docId");
+
+        $body = $this->getResponse()->getBody();
+
+        $this->assertTrue(strpos($body, '>file1.txt') < strpos($body, '>file2.txt'), "Order of files is wrong.");
+        $this->assertTrue(strpos($body, '>file2.txt') < strpos($body, '>file10.txt'), "Order of files is wrong.");
+    }
+
     /**
      * Tests, whether the current language of a document's file is shown behind the link as flag.
      */
@@ -969,11 +992,11 @@ class Frontdoor_IndexControllerTest extends ControllerTestCase {
 
         $this->dispatch('/frontdoor/index/index/docId/' . $docId);
         $body = $this->getResponse()->getBody();
-        $this->assertContains('<img width="16" height="11" src="/img/lang/eng.png" alt="eng"/>', $body);
-        $this->assertContains('<img width="16" height="11" src="/img/lang/deu.png" alt="deu"/>', $body);
-        $this->assertContains('<img width="16" height="11" src="/img/lang/spa.png" alt="spa"/>', $body);
-        $this->assertContains('<img width="16" height="11" src="/img/lang/fra.png" alt="fra"/>', $body);
-        $this->assertContains('<img width="16" height="11" src="/img/lang/rus.png" alt="rus"/>', $body);
+        $this->assertContains('<img width="16" height="11" src="/img/lang/eng.png" class="file-language eng" alt="eng"/>', $body);
+        $this->assertContains('<img width="16" height="11" src="/img/lang/deu.png" class="file-language deu" alt="deu"/>', $body);
+        $this->assertContains('<img width="16" height="11" src="/img/lang/spa.png" class="file-language spa" alt="spa"/>', $body);
+        $this->assertContains('<img width="16" height="11" src="/img/lang/fra.png" class="file-language fra" alt="fra"/>', $body);
+        $this->assertContains('<img width="16" height="11" src="/img/lang/rus.png" class="file-language rus" alt="rus"/>', $body);
     }
 
     /**
@@ -1079,6 +1102,37 @@ class Frontdoor_IndexControllerTest extends ControllerTestCase {
         $this->assertQueryContentContains('//td', '2012/02/01');
     }
 
+    public function testMetaTagsForFileAccess() {
+        $this->markTestIncomplete('test not implemented');
+    }
+
+    public function testMetaTagsForFiles() {
+        $file = $this->createTestFile('foo.pdf');
+
+        $doc = $this->createTestDocument();
+        $doc->setServerState('published');
+        $doc->addFile($file);
+        $docId = $doc->store();
+
+        $this->dispatch('frontdoor/index/index/docId/' . $docId);
+
+        $this->assertQueryContentContains('//meta/@content', "/files/$docId/foo.pdf");
+    }
+
+    public function testMetaTagsforEmbargoedDocument() {
+        $file = $this->createTestFile('foo.pdf');
+
+        $doc = $this->createTestDocument();
+        $doc->setEmbargoDate('2112-02-01');
+        $doc->setServerState('published');
+        $doc->addFile($file);
+        $docId = $doc->store();
+
+        $this->dispatch('frontdoor/index/index/docId/' . $docId);
+
+        $this->assertNotQueryContentContains('//meta/@content', "/files/$docId/foo.pdf");
+    }
+
     /**
      * EmbargoDate should be shown in metadata table, no matter if it has passed or not.
      * OPUSVIER-3270.
@@ -1114,7 +1168,7 @@ class Frontdoor_IndexControllerTest extends ControllerTestCase {
         $config = Zend_Registry::get('Zend_Config');
         $config->merge(new Zend_Config(array('export' => array('stylesheet' => array('frontdoor' => 'example')))));
         $this->dispatch('/frontdoor/index/index/docId/305');
-        $this->assertQuery('//a[@href="/frontdoor/index/index/docId/305/export/xml/stylesheet/example"]');
+        $this->assertQuery('//a[@href="/export/index/index/docId/305/export/xml/searchtype/id/stylesheet/example"]');
     }
 
     /**
@@ -1181,6 +1235,28 @@ class Frontdoor_IndexControllerTest extends ControllerTestCase {
 
         $this->assertXpath('//meta[@name="DC.Identifier" and @content="urn:nbn:op:123"]');
         $this->assertXpath('//meta[@name="DC.Identifier" and @content="' . $urnResolverUrl . 'urn:nbn:op:123"]');
+    }
+
+    public function testBelongsToBibliographyTurnedOn() {
+        $this->useEnglish();
+        Zend_Registry::get('Zend_Config')->merge(new Zend_Config(array(
+            'frontdoor' => array('metadata' => array('BelongsToBibliography' => 1)
+        ))));
+
+        $this->dispatch('/frontdoor/index/index/docId/146');
+
+        $this->assertXpath('//td[contains(@class, "BelongsToBibliography")]');
+        $this->assertXpathContentContains('//td[contains(@class, "BelongsToBibliography")]', 'Yes');
+    }
+
+    public function testBelongsToBibliographyTurnedOff() {
+        Zend_Registry::get('Zend_Config')->merge(new Zend_Config(array(
+            'frontdoor' => array('metadata' => array('BelongsToBibliography' => 0)
+        ))));
+
+        $this->dispatch('/frontdoor/index/index/docId/146');
+
+        $this->assertNotXpath('//td[contains(@class, "BelongsToBibliography")]');
     }
 
 }

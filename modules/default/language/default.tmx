@@ -77,8 +77,8 @@
             </tuv>
         </tu>
 
-  
-    
+
+
         <tu tuid="home_modulename">
           <tuv xml:lang="en">
             <seg>Home</seg>
@@ -113,7 +113,7 @@
         </tu>
 
 
-    
+
         <tu tuid="home_index_index_actionname">
           <tuv xml:lang="en">
             <seg>Home</seg>
@@ -314,19 +314,19 @@
 
          <tu tuid="search_titles_resultlist">
           <tuv xml:lang="en">
-            <seg>Query returned <b>%1$s</b> hits.</seg>
+            <seg><![CDATA[Query returned <b>%1$s</b> hits.]]></seg>
           </tuv>
           <tuv xml:lang="de">
-            <seg>Die Suche ergab <b>%1$s</b> Treffer.</seg>
+            <seg><![CDATA[Die Suche ergab <b>%1$s</b> Treffer.]]></seg>
           </tuv>
         </tu>
 
          <tu tuid="search_results_from_to">
           <tuv xml:lang="en">
-            <seg>Showing results <b>%1$s</b> to <b>%2$s</b></seg>
+            <seg><![CDATA[Showing results <b>%1$s</b> to <b>%2$s</b>]]></seg>
           </tuv>
           <tuv xml:lang="de">
-            <seg>Ergebnisse <b>%1$s</b> bis <b>%2$s</b></seg>
+            <seg><![CDATA[Ergebnisse <b>%1$s</b> bis <b>%2$s</b>]]></seg>
           </tuv>
         </tu>
 
@@ -392,7 +392,16 @@
             <seg>Speichern</seg>
           </tuv>
         </tu>
-        
+
+        <tu tuid="form_button_next">
+            <tuv xml:lang="en">
+                <seg>Next</seg>
+            </tuv>
+            <tuv xml:lang="de">
+                <seg>Weiter</seg>
+            </tuv>
+        </tu>
+
         <tu tuid="Cancel">
           <tuv xml:lang="en">
             <seg>Cancel</seg>
@@ -400,8 +409,8 @@
           <tuv xml:lang="de">
             <seg>Abbrechen</seg>
           </tuv>
-        </tu>        
-        
+        </tu>
+
         <tu tuid="Next">
           <tuv xml:lang="en">
             <seg>Next</seg>
@@ -410,7 +419,7 @@
             <seg>Weitere</seg>
           </tuv>
         </tu>
-		
+
         <tu tuid="pkm_list_keys">
           <tuv xml:lang="en">
             <seg>Key Management</seg>
@@ -689,7 +698,7 @@
             <seg>Nachricht vom OPUS 4 Repository bezüglich Ihrer Veröffentlichung</seg>
         </tuv>
     </tu>
-    
+
      <tu tuid="results_title_single">
          <tuv xml:lang="en">
              <seg>search hit</seg>
@@ -707,8 +716,25 @@
              <seg>Treffer</seg>
          </tuv>
      </tu>
+	 
+	 <tu tuid="logo_title">
+         <tuv xml:lang="en">
+             <seg>Home</seg>
+         </tuv>
+         <tuv xml:lang="de">
+             <seg>Home</seg>
+         </tuv>
+     </tu>
+	 
 
-
+     <tu tuid="opus.environment">
+         <tuv xml:lang="en">
+             <seg>NON PRODUCTION ENVIRONMENT</seg>
+         </tuv>
+         <tuv xml:lang="de">
+             <seg>TESTUMGEBUNG</seg>
+         </tuv>
+     </tu>
 
     </body>
 </tmx>
